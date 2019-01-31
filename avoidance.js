@@ -12,8 +12,15 @@ var player = {
 };
 var isGameStarted = false;
 var currentLevel = 0;
+var numberOfDeaths = 0;
 var whiteVal = 255;
 var blackVal = 0;
+
+var difficultyMap = [1, .75, .6, .45, .3, .15];
+var currentDifficulty = 0;
+var difficultyCurve = .2; //todo: make user-selectable
+
+var powerUp = null;
 
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
@@ -37,20 +44,17 @@ function draw() {
       }
     }
     else {
-      currentLevel++;
-      for (var j=0; j<currentLevel; j++) {
-        createEnemy();
-      }
+      incrementLevel();
+    }
+    if (powerUp) {
+      powerUp.drawSelf();
+      powerUp.update();
     }
     textAlign(RIGHT, TOP);
     fill(blackVal);
     text(`level: ${currentLevel}`, width - 10, 10);
-    // todo: break into own function, modulate glow with lfo
-    if (player.hasPowerUp) {
-      fill(255, 230, 0, 100);
-      ellipse(mouseX, mouseY, 20, 20);
-      fill(blackVal);
-    }
+    textAlign(LEFT, TOP);
+    text(`deaths: ${numberOfDeaths}`, 10, 10);
   } else {
     displayTextDialog('click here to begin');
     push(); // save intro game state so we don't have to do setup when the player inevitably sucks
@@ -64,31 +68,39 @@ function mouseClicked() {
   }
   if (player.isDead) {
     pop();
-    player.isDead = false;
+    numberOfDeaths++;
+    player = {
+      isDead: false,
+      hasPowerUp: false
+    };
+    powerUp = null;
     isGameStarted = false;
     currentLevel = 1;
     enemies = [];
     createEnemy();
     return;
   }
-  if (player.hasPowerUp) {
-    usePowerUp();
+  if (player.hasPowerUp && powerUp) {
+    powerUp.use();
   }
 }
 
 // CLASSES
 
 function Enemy(initOptions) {
-  const { initX, initY, initSize, initSpeed, lifespan } = initOptions;
+  const { initX, initY, initSize, initSpeed, shrinkRate } = initOptions;
   this.x = initX;
   this.y = initY;
   this.speed = initSpeed;
   this.size = initSize;
-  this.shrinkRate = lifespan / 100;
+  this.shrinkRate = shrinkRate;
 
   this.update = function() {
-    if (this.isProximateToMouse()) {
+    if (this.isCollisionWithMouse()) {
       player.isDead = true;
+    }
+    if (powerUp && powerUp.stepsUntilDeath && this.isCollisionWithPowerUp()) {
+      killEnemy(this);
     }
     if (!player.isDead) {
       var xDiff = Math.abs(mouseX - this.x);
@@ -99,7 +111,7 @@ function Enemy(initOptions) {
       this.y += mouseY > this.y ? motionYIncrement : (-1 * motionYIncrement);
 
       if (!player.isDead && this.size > 0) {
-        this.size -= .1;
+        this.size -= .1 + this.shrinkRate/1000;
       }
       if (this.size <= 0) {
         killEnemy(this);
@@ -112,15 +124,8 @@ function Enemy(initOptions) {
       ellipse(this.x, this.y, this.size, this.size);
     }
   };
-  this.isProximateToMouse = function() {
-    var absMouseX = Math.abs(mouseX);
-    var absMouseY = Math.abs(mouseY);
-    var absX = Math.abs(this.x);
-    var absY = Math.abs(this.y);
-    var isProximateX = Math.abs(absMouseX - absX) <= this.size;
-    var isProximateY = Math.abs(absMouseY - absY) <= this.size;
-    return isProximateX && isProximateY;
-  };
+  this.isCollisionWithMouse = () => collisionDetection(this);
+  this.isCollisionWithPowerUp = () => collisionDetection(this, powerUp);
   // GRAPHIX
   this.drawEcho = function() {
     var echoMapPoint = {x: this.x, y: this.y};
@@ -135,23 +140,74 @@ function Enemy(initOptions) {
       }
     }
 
-    for(var k=0; k<this.echoMap.length; k++) {
+    for (var k=0; k<this.echoMap.length; k++) {
       var percentage = k/this.echoMap.length;
-      // var interpolatedColor =
-      // noStroke();
       const colorObj = lerpColor(color(blackVal), color(whiteVal), percentage);
       colorObj.setAlpha(percentage * 255 - 50);
-      fill(colorObj); // trial and error til it looks cool
+      fill(colorObj);
 
       var posX = this.echoMap[k].x + (random(0, 1) > .9 ? random(-1, 1) : 0);
       var posY = this.echoMap[k].y + (random(0, 1) > .9 ? random(-1, 1) : 0);
       ellipse(posX, posY, this.size, this.size);
       if (k === this.echoMap.length - 1) {
-        // last time 'round, reset the stroke
+        // last time 'round, reset the fill
         fill(whiteVal);
       }
     }
   };
+}
+
+function PowerUp(initOptions) {
+  const { x, y } = initOptions;
+  this.x = x;
+  this.y = y;
+  this.seedAngle = 0;
+  this.colorObj = color(255, 230, 0);
+  this.size = 0;
+  this.stepsUntilDeath = null;
+
+  this.update = function() {
+    if (this.stepsUntilDeath) {
+      // do explosion
+      this.stepsUntilDeath--;
+      this.size = this.size + this.stepsUntilDeath;
+      if (!this.stepsUntilDeath) {
+        powerUp = null;
+      }
+    } else {
+      if (!player.hasPowerUp && !this.stepsUntilDeath && this.isCollisionWithMouse()) {
+        player.hasPowerUp = true;
+        console.log('got it');
+      }
+      this.seedAngle += .1;
+      if (this.seedAngle === 360) {
+        this.seedAngle = 0;
+      }
+      var sinVal = sin(this.seedAngle);
+      this.size = 5*sinVal + 25;
+      this.colorObj.setAlpha(100*sinVal + 155);
+    }
+  }
+
+  this.drawSelf = function() {
+    fill(this.colorObj);
+    if (player.hasPowerUp) {
+      ellipse(mouseX, mouseY, this.size, this.size);
+    } else {
+      ellipse(this.x, this.y, this.size, this.size);
+    }
+    fill(blackVal);
+  }
+
+  this.isCollisionWithMouse = () => collisionDetection(this);
+
+  this.use = function() {
+    player.hasPowerUp = false;
+    this.x = mouseX;
+    this.y = mouseY;
+    this.stepsUntilDeath = 10;
+    this.size = this.size * this.stepsUntilDeath;
+  }
 }
 
 // HELPERS
@@ -165,33 +221,52 @@ function displayTextDialog(textToDisplay) {
   text(textToDisplay, width/2, height/2);
 }
 
+function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: 0 }) {
+  // "size" param is diameter, we need radius...hence size / 2
+  var isCollisionX = Math.abs(objB.x - objA.x) <= (objA.size/2 + objB.size/2);
+  var isCollisionY = Math.abs(objB.y - objA.y) <= (objA.size/2 + objB.size/2);
+
+  return isCollisionX && isCollisionY;
+};
+
+function incrementLevel() {
+  currentLevel++;
+  for (var j=0; j<currentLevel; j++) {
+    if(random(0, 1) < difficultyMap[Math.floor(currentDifficulty)]) {
+      createEnemy();
+    }
+  }
+  if (currentLevel % 3 > 0
+    && !player.hasPowerUp
+    && !powerUp
+  ) {
+    powerUp = new PowerUp({
+      x: random(0, width),
+      y: random(0, height)
+    });
+    currentDifficulty += difficultyCurve;
+  }
+}
+
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  var initSize = random(currentLevel + 10, currentLevel * 2 + 100);
-  var initSpeed = 4 + random(0, currentLevel);
-  var lifespan = random(100, currentLevel + 100);
+  var initSize = random(currentLevel + 10, currentLevel * 1/difficultyCurve + 100);
+  var initSpeed = 3 + random(0, currentLevel * difficultyCurve);
+  var shrinkRate = random(-1*difficultyCurve, currentLevel);
 
+  // init position shouldn't === mouse position...that's just evil.
+  // 20px is an arbitrary fudge factor based on my own reaction time
+  var isGuaranteedCollision = collisionDetection({ x: initX, y: initY, size: initSize + 20 });
   return enemies.push(new Enemy({
-    initX: initX === mouseX ? initX + initSize : initX,
-    initY: initY === mouseX ? initY + initSize : initY,
+    initX: isGuaranteedCollision ? initX + initSize : initX,
+    initY: isGuaranteedCollision ? initY + initSize : initY,
     initSize,
     initSpeed,
-    lifespan
+    shrinkRate
   }));
 }
 
 function killEnemy(enemy) {
   enemies.splice(enemies.indexOf(this), 1);
 }
-
-function usePowerUp() {
-  console.log('powerup used');
-}
-
-// NOTES
-
-// mouseX and mouseY are relative to the canvas, not the coord system of draw()
-
-// translate and rotate move the "pen" position so that all draw() values are offset
-// by the same amount
