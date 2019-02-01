@@ -3,7 +3,7 @@
 
 // config
 var backgroundColor = 200;
-var echoLength = 4;
+var echoLength = 3;
 
 var enemies = [];
 var player = {
@@ -11,6 +11,7 @@ var player = {
   hasPowerUp: false
 };
 var isGameStarted = false;
+var isGamePaused = false;
 var currentLevel = 0;
 var numberOfDeaths = 0;
 var whiteVal = 255;
@@ -29,7 +30,7 @@ function setup() {
 }
 
 function draw() {
-  if (isGameStarted) {
+  if (isGameStarted && !isGamePaused) {
     if (player.isDead) {
       displayTextDialog('you suck');
       return;
@@ -37,14 +38,14 @@ function draw() {
     // actual render loop
     background(backgroundColor);
     if (enemies.length > 0) {
-      for (var i=0; i<enemies.length; i++) {
-        enemies[i].drawEcho();
-        enemies[i].drawSelf();
-        enemies[i].update();
-      }
-    }
-    else {
+      drawAllEnemies();
+    } else {
       incrementLevel();
+      drawAllEnemies();
+      isGamePaused = true;
+      setTimeout(() => {
+        isGamePaused = false;
+      }, 100 / difficultyCurve);
     }
     if (powerUp) {
       powerUp.drawSelf();
@@ -55,9 +56,10 @@ function draw() {
     text(`level: ${currentLevel}`, width - 10, 10);
     textAlign(LEFT, TOP);
     text(`deaths: ${numberOfDeaths}`, 10, 10);
+  } else if (isGamePaused) {
+    return;
   } else {
     displayTextDialog('click here to begin');
-    push(); // save intro game state so we don't have to do setup when the player inevitably sucks
   }
 }
 
@@ -67,7 +69,6 @@ function mouseClicked() {
     return;
   }
   if (player.isDead) {
-    pop();
     numberOfDeaths++;
     player = {
       isDead: false,
@@ -94,6 +95,7 @@ function Enemy(initOptions) {
   this.speed = initSpeed;
   this.size = initSize;
   this.shrinkRate = shrinkRate;
+  this.echoAngle = 0;
 
   this.update = function() {
     if (this.isCollisionWithMouse()) {
@@ -128,11 +130,17 @@ function Enemy(initOptions) {
   this.isCollisionWithPowerUp = () => collisionDetection(this, powerUp);
   // GRAPHIX
   this.drawEcho = function() {
-    var echoMapPoint = {x: this.x, y: this.y};
+    this.echoAngle += .9;
+    if (this.echoAngle >= 360) {
+      this.echoAngle = 0;
+    }
+    var sinVal = sin(this.echoAngle);
+    var echoMapPoint = { x: this.x, y: this.y };
+
     if (!this.echoMap) {
       this.echoMap = new Array(echoMapPoint);
     } else {
-      if (random(-.5, 1) > 0) { // sputtering effect
+      if (fudge(sinVal, 5000) > 0) { // sputtering effect
         this.echoMap.push(echoMapPoint);
       }
       if (this.echoMap.length > echoLength) {
@@ -146,9 +154,10 @@ function Enemy(initOptions) {
       colorObj.setAlpha(percentage * 255 - 50);
       fill(colorObj);
 
-      var posX = this.echoMap[k].x + (random(0, 1) > .9 ? random(-1, 1) : 0);
-      var posY = this.echoMap[k].y + (random(0, 1) > .9 ? random(-1, 1) : 0);
-      ellipse(posX, posY, this.size, this.size);
+      var posX = fudge(this.echoMap[k].x, .5);
+      var posY = fudge(this.echoMap[k].y, .5);
+      var exhaustSize = this.size - (10/echoLength)*(this.echoMap.length-k);
+      ellipse(posX, posY, exhaustSize, exhaustSize);
       if (k === this.echoMap.length - 1) {
         // last time 'round, reset the fill
         fill(whiteVal);
@@ -177,7 +186,6 @@ function PowerUp(initOptions) {
     } else {
       if (!player.hasPowerUp && !this.stepsUntilDeath && this.isCollisionWithMouse()) {
         player.hasPowerUp = true;
-        console.log('got it');
       }
       this.seedAngle += .1;
       if (this.seedAngle === 360) {
@@ -236,7 +244,7 @@ function incrementLevel() {
       createEnemy();
     }
   }
-  if (currentLevel % 3 > 0
+  if (currentLevel % 3 === 0
     && !player.hasPowerUp
     && !powerUp
   ) {
@@ -251,9 +259,11 @@ function incrementLevel() {
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  var initSize = random(currentLevel + 10, currentLevel * 1/difficultyCurve + 100);
+  // var initSize = random(currentLevel + 10, currentLevel * 1/difficultyCurve + 100);
   var initSpeed = 3 + random(0, currentLevel * difficultyCurve);
   var shrinkRate = random(-1*difficultyCurve, currentLevel);
+
+  var initSize = random(fudge(20, currentLevel), fudge(100, currentLevel * 1/difficultyCurve));
 
   // init position shouldn't === mouse position...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
@@ -269,4 +279,17 @@ function createEnemy() {
 
 function killEnemy(enemy) {
   enemies.splice(enemies.indexOf(this), 1);
+}
+
+function drawAllEnemies() {
+  for (var i=0; i<enemies.length; i++) {
+    enemies[i].drawEcho();
+    enemies[i].drawSelf();
+    enemies[i].update();
+  }
+}
+
+// utility
+function fudge(inputVal, pct) {
+  return inputVal + random(-pct/100 * inputVal, pct/100 * inputVal);
 }
