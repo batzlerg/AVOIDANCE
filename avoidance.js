@@ -84,7 +84,9 @@ function draw() {
       pauseTimer = (10 * 1/difficultyCurve) - game.currentLevel;
     }
     drawHeader();
-    drawPlayer();
+    if (!player.hasPowerUp) {
+      drawPlayer();
+    }
   } else if (game.isFadeOut) {
     const increasingDarkness = color(random(0,30), random(0,30), random(0,30));
     increasingDarkness.setAlpha(20);
@@ -98,7 +100,9 @@ function draw() {
     if (pauseTimer === 0) {
       game.isFadeOut = false;
     }
-    drawPlayer();
+    if (!player.hasPowerUp) {
+      drawPlayer();
+    }
     if (powerUp) {
       powerUp.drawSelf();
       powerUp.update();
@@ -333,10 +337,10 @@ function createEnemy() {
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
-  var isGuaranteedCollision = collisionDetection({ x: initX, y: initY, size: initSize + 20 });
+  var isLikelyCollision = collisionDetection({ x: initX, y: initY, size: initSize + 20 });
   return enemies.push(new Enemy({
-    initX: isGuaranteedCollision ? initX + initSize : initX,
-    initY: isGuaranteedCollision ? initY + initSize : initY,
+    initX: isLikelyCollision ? initX + initSize : initX,
+    initY: isLikelyCollision ? initY + initSize : initY,
     initSize,
     initSpeed,
     shrinkRate
