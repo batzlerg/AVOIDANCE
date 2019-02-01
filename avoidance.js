@@ -125,7 +125,7 @@ function draw() {
     }
     return;
   } else {
-    displayTextDialog('click here to begin');
+    displayIntroDialog();
     cursor();
   }
 }
@@ -303,7 +303,7 @@ function PowerUp(initOptions) {
  HELPERS
 ********/
 
-function displayTextDialog(textToDisplay) {
+function drawDialogBox() {
   rectMode(CENTER);
   // grey backdrop
   fill(colors.grey);
@@ -311,9 +311,26 @@ function displayTextDialog(textToDisplay) {
   // white rect
   fill(colors.white);
   rect(width/2, height/2, width/2, height/4);
+}
+
+function displayTextDialog(textToDisplay) {
+  drawDialogBox();
   textAlign(CENTER, CENTER);
   fill(colors.black);
   text(textToDisplay, width/2, height/2);
+}
+
+function displayIntroDialog() {
+  drawDialogBox();
+  textAlign(CENTER, CENTER);
+  fill(colors.black);
+  push();
+  textFont('Courier New');
+  textSize(30);
+  textStyle('bold');
+  text('AVOIDANCE', width/2, height/2 - 30);
+  pop();
+  text('click here to begin', width/2, height/2 + 30);
 }
 
 function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
