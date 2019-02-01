@@ -162,6 +162,7 @@ function Enemy(initOptions) {
   this.x = initX;
   this.y = initY;
   this.speed = initSpeed;
+  this.initSize = initSize;
   this.size = initSize;
   this.shrinkRate = shrinkRate;
   this.echoAngle = 0;
@@ -184,10 +185,9 @@ function Enemy(initOptions) {
       this.y += mouseY > this.y ? motionYIncrement : (-1 * motionYIncrement);
 
       if (!player.isDead && this.size > 0) {
-        this.size -= .1 + this.shrinkRate/1000;
+        this.size -= 10/Math.abs(this.shrinkRate - (this.initSize * this.size)/50);
       }
       if (this.size <= 0) {
-        console.log(this.size);
         killEnemy(this);
       }
     }
@@ -343,9 +343,9 @@ function incrementLevel() {
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  var initSize = random(fudge(20, game.currentLevel), fudge(100, game.currentLevel * 1/difficultyCurve));
+  var initSize = random(fudge(40, game.currentLevel), fudge(100, game.currentLevel * 1/difficultyCurve));
   var initSpeed = 3 + random(0, game.currentLevel * difficultyCurve);
-  var shrinkRate = random(-1*difficultyCurve, game.currentLevel);
+  var shrinkRate = random(-1*difficultyCurve, .2/game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
