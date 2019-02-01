@@ -5,20 +5,12 @@
  DEFINITIONS
 ************/
 
-// objects
-var game = {
-  isStarted: false,
-  isFadeOut: false,
-  currentLevel: 0,
-  deathCount: 0
-};
-var player = {
-  isDead: false,
-  hasPowerUp: false,
-  isVisible: true
-};
-var enemies = [];
-var powerUp = null;
+// config
+var difficultyMap = [1, .75, .6, .45, .3, .15];
+var difficultyCurve = .2; //todo: make user-selectable
+var enemySpawnRate = 0;
+var echoLength = 3;
+var nightVisionFadeInTime = 30;
 
 // design
 var colors = {
@@ -30,16 +22,29 @@ var colors = {
 };
 var windowPadding = 15;
 
-// config
-var difficultyMap = [1, .75, .6, .45, .3, .15];
-var difficultyCurve = .2; //todo: make user-selectable
-var enemySpawnRate = 0;
-var echoLength = 3;
-var fadeInRamp = 30;
-
 // other stuff
 var pauseTimer = 0;
 var lfoSeed = 0;
+
+// initializers
+var initPlayer = () => ({
+  isDead: false,
+  hasPowerUp: false,
+  isVisible: true,
+  size: 5
+});
+
+// game objects
+var game = {
+  isStarted: false,
+  isFadeOut: false,
+  currentLevel: 0,
+  deathCount: 0,
+  nightVisionEnabled: true
+};
+var player = initPlayer();
+var enemies = [];
+var powerUp = null;
 
 /**********
  LIFECYCLE
@@ -78,11 +83,7 @@ function draw() {
       game.isFadeOut = true;
       pauseTimer = (10 * 1/difficultyCurve) - game.currentLevel;
     }
-    textAlign(RIGHT, TOP);
-    fill(colors.darkGrey);
-    text(`level: ${game.currentLevel}`, width - windowPadding, windowPadding);
-    textAlign(LEFT, TOP);
-    text(`deaths: ${game.deathCount}`, windowPadding, windowPadding);
+    drawHeader();
     drawPlayer();
   } else if (game.isFadeOut) {
     const increasingDarkness = color(random(0,30), random(0,30), random(0,30));
@@ -91,7 +92,7 @@ function draw() {
     rect(width/2, height/2, width, height);
     pauseTimer--;
 
-    if (pauseTimer < fadeInRamp) {
+    if (game.nightVisionEnabled && pauseTimer < nightVisionFadeInTime) {
       drawAllEnemies({ fadeIn: true });
     }
     if (pauseTimer === 0) {
@@ -120,11 +121,7 @@ function mouseClicked() {
   }
   if (player.isDead) {
     game.deathCount++;
-    player = {
-      isDead: false,
-      hasPowerUp: false,
-      isVisible: true
-    };
+    player = initPlayer();
     powerUp = null;
     game.isStarted = false;
     game.currentLevel = 1;
@@ -156,6 +153,8 @@ function Enemy(initOptions) {
   this.update = function() {
     if (this.isCollisionWithMouse()) {
       player.isDead = true;
+      fill('red');
+      circle(mouseX, mouseY, player.size, player.size);
     }
     if (powerUp && powerUp.stepsUntilDeath && this.isCollisionWithPowerUp()) {
       killEnemy(this);
@@ -360,6 +359,14 @@ function drawAllEnemies(options = {}) {
   }
 }
 
+function drawHeader() {
+  fill(player.isDead ? colors.black : colors.darkGrey);
+  textAlign(RIGHT, TOP);
+  text(`level: ${game.currentLevel}`, width - windowPadding, windowPadding);
+  textAlign(LEFT, TOP);
+  text(`deaths: ${game.deathCount}`, windowPadding, windowPadding);
+}
+
 function drawPlayer() {
   lfoSeed+= 1;
   if (lfoSeed >= 360) {
@@ -369,7 +376,7 @@ function drawPlayer() {
   var isPlayerInBounds = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
   if (player.isVisible && isPlayerInBounds) {
     fill(colors.grey);
-    circle(mouseX, mouseY, 5, 5);
+    circle(mouseX, mouseY, player.size, player.size);
     fill(colors.darkGrey);
   }
 }
