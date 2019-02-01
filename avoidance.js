@@ -45,6 +45,17 @@ var game = {
 var player = initPlayer();
 var enemies = [];
 var powerUp = null;
+var youLose = [
+  'yikes',
+  'and that\'s that',
+  'no más',
+  'door\'s that way, friend',
+  'strike three, yer out',
+  'FIN',
+  'ouch.'
+];
+var getYouLoseMessage = () => youLose[Math.floor(Math.random() * Math.floor(youLose.length))];
+var youLoseMessage = getYouLoseMessage();
 
 /**********
  LIFECYCLE
@@ -63,7 +74,7 @@ function draw() {
   noCursor();
   if (game.isStarted && !game.isFadeOut) {
     if (player.isDead) {
-      displayTextDialog('you suck');
+      displayTextDialog(youLoseMessage);
       background(random(0,100), random(0,100), random(0,100), 1);
       drawPlayer();
       return;
@@ -125,6 +136,7 @@ function mouseClicked() {
   }
   if (player.isDead) {
     game.deathCount++;
+    youLoseMessage = getYouLoseMessage();
     player = initPlayer();
     powerUp = null;
     game.isStarted = false;
