@@ -66,7 +66,7 @@ function setup() {
   strokeWeight(0);
   background(colors.backgroundGrey);
   noCursor();
-  textSize(20);
+  textSize(22);
   textFont('Helvetica');
 }
 
