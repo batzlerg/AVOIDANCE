@@ -18,7 +18,7 @@ var colors = {
   backgroundGrey: 200,
   grey: 160,
   darkGrey: 90,
-  black: 0
+  black: 80
 };
 var windowPadding = 15;
 
