@@ -47,6 +47,10 @@ var game = {
 var player = initPlayer();
 var enemies = [];
 var powerUp = null;
+var powerUpColors = {
+  YELLOW: 'yellow',
+  PURPLE: 'purple'
+};
 var youLose = [
   'yikes',
   'and that\'s that',
@@ -98,7 +102,7 @@ function draw() {
     } else {
       incrementLevel();
       game.isFadeOut = true;
-      pauseTimer = (10 * 1/difficultyCurve) - game.currentLevel;
+      pauseTimer = (10 * 1/difficultyCurve);
     }
     drawHeader();
     if (!player.hasPowerUp) {
@@ -156,6 +160,9 @@ function mouseClicked() {
 function mouseReleased() {
   if (player.hasPowerUp && powerUp) {
     powerUp.use();
+  } else if (powerUp && powerUp.isTriggered) {
+    powerUp.isTriggered = false;
+    powerUp.isActive = true;
   }
 }
 
@@ -178,7 +185,7 @@ function Enemy(initOptions) {
       player.isDead = true;
       player.deathLocation = {x: mouseX, y: mouseY};
     }
-    if (powerUp && powerUp.stepsUntilDeath && this.isCollisionWithPowerUp()) {
+    if (powerUp && powerUp.isActive && this.isCollisionWithPowerUp()) {
       killEnemy(this);
     }
     if (!player.isDead) {
@@ -206,7 +213,7 @@ function Enemy(initOptions) {
   this.drawSelfTranslucent = function() {
     if (!player.isDead && this.size > 0) {
       const translucentWhite = color(colors.white);
-      translucentWhite.setAlpha(1/difficultyCurve - game.currentLevel);
+      translucentWhite.setAlpha(1/difficultyCurve);
       fill(translucentWhite);
       ellipse(this.x, this.y, this.size, this.size);
     }
@@ -249,38 +256,87 @@ function Enemy(initOptions) {
 }
 
 function PowerUp(initOptions) {
-  const { x, y } = initOptions;
+  const { x, y, type } = initOptions;
   this.x = x;
   this.y = y;
+  this.type = type;
   this.seedAngle = 0;
-  this.colorObj = color(255, 230, 0);
+  this.colorObjs = {
+    [powerUpColors.YELLOW]: color(255, 230, 0),
+    [powerUpColors.PURPLE]: color(170, 82, 207)
+  };
+  this.durations = {
+    [powerUpColors.YELLOW]: 10,
+    [powerUpColors.PURPLE]: 40
+  };
   this.size = 0;
-  this.stepsUntilDeath = null;
+  this.isTriggered = false;
+  this.stepsUntilActive = this.durations[this.type]*3;
+  this.isActive = false;
+  this.stepsUntilDeath = this.durations[this.type];
 
   this.update = function() {
-    if (this.stepsUntilDeath) {
-      // do explosion
-      this.stepsUntilDeath--;
-      this.size = this.size + this.stepsUntilDeath;
-      if (!this.stepsUntilDeath) {
-        powerUp = null;
-      }
-    } else {
-      if (!player.hasPowerUp && !this.stepsUntilDeath && this.isCollisionWithMouse()) {
-        player.hasPowerUp = true;
-      }
-      this.seedAngle += .1;
-      if (this.seedAngle === 360) {
-        this.seedAngle = 0;
-      }
-      var sinVal = sin(this.seedAngle);
-      this.size = 5*sinVal + 25;
-      this.colorObj.setAlpha(100*sinVal + 155);
+    switch (this.type) {
+      case powerUpColors.YELLOW:
+        if (this.isActive) {
+          // do explosion
+          this.stepsUntilDeath--;
+          this.size = this.size + this.stepsUntilDeath;
+          if (!this.stepsUntilDeath) {
+            powerUp = null;
+          }
+          this.colorObjs[this.type].setAlpha(255);
+        } else {
+          if (!player.hasPowerUp && !this.isActive && this.isCollisionWithMouse()) {
+            player.hasPowerUp = true;
+          }
+          this.seedAngle += .1;
+          if (this.seedAngle >= 360) {
+            this.seedAngle = 0;
+          }
+          var sinVal = sin(this.seedAngle);
+          this.size = 5*sinVal + 25;
+          this.colorObjs[this.type].setAlpha(100*sinVal + 155);
+        }
+        break;
+      case powerUpColors.PURPLE:
+        if (this.isActive) {
+          // do explosion
+          this.stepsUntilDeath--;
+          if (this.stepsUntilDeath < this.durations[this.type]/3) {
+            this.size = this.size - .7*this.stepsUntilDeath;
+          } else {
+            this.size = this.size + .7*this.stepsUntilDeath;
+          }
+          if (!this.stepsUntilDeath) {
+            powerUp = null;
+          }
+          this.colorObjs[this.type].setAlpha(255);
+        } else if (this.isTriggered) {
+          this.stepsUntilActive--;
+          if (this.stepsUntilActive <= 0) {
+            this.isActive = true;
+          }
+          this.colorObjs[this.type].setAlpha(map(this.stepsUntilActive, 0, this.durations[this.type], 0, 255));
+        } else {
+          if (!player.hasPowerUp && this.isCollisionWithMouse()) {
+            player.hasPowerUp = true;
+          }
+          this.seedAngle += .3;
+          if (this.seedAngle >= 360) {
+            this.seedAngle = 0;
+          }
+          var sinVal = sin(this.seedAngle);
+          this.size = 5*sinVal + 25;
+          this.colorObjs[this.type].setAlpha(100*sinVal + 155);
+        }
+        break;
     }
+
   }
 
   this.drawSelf = function() {
-    fill(this.colorObj);
+    fill(this.colorObjs[this.type]);
     if (player.hasPowerUp) {
       ellipse(mouseX, mouseY, this.size, this.size);
     } else {
@@ -295,8 +351,16 @@ function PowerUp(initOptions) {
     player.hasPowerUp = false;
     this.x = mouseX;
     this.y = mouseY;
-    this.stepsUntilDeath = 10;
-    this.size = this.size * this.stepsUntilDeath;
+    switch (this.type) {
+      case powerUpColors.YELLOW:
+        this.isActive = true;
+        this.size = this.size * this.stepsUntilDeath;
+        break;
+      case powerUpColors.PURPLE:
+        this.isTriggered = true;
+        this.size = player.size;
+        break;
+    }
   }
 }
 
@@ -349,17 +413,22 @@ function incrementLevel() {
       createEnemy();
     }
   }
-  if (
-    game.currentLevel % 3 === 0
-    && !player.hasPowerUp
-    && !powerUp
-  ) {
-    powerUp = new PowerUp({
-      x: random(0, width),
-      y: random(0, height)
-    });
-    enemySpawnRate += difficultyCurve;
+  if (!powerUp) {
+    if (game.currentLevel % 3 === 0) {
+      powerUp = new PowerUp({
+        x: random(0, width),
+        y: random(0, height),
+        type: powerUpColors.YELLOW
+      });
+    } else if (game.currentLevel % 4 === 0) {
+      powerUp = new PowerUp({
+        x: random(0, width),
+        y: random(0, height),
+        type: powerUpColors.PURPLE
+      });
+    }
   }
+  enemySpawnRate += difficultyCurve;
 }
 
 function createEnemy() {
