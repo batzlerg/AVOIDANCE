@@ -1,92 +1,144 @@
 // AVOIDANCE
 // https://grahammak.es/games/avoidance
 
-// config
-var backgroundColor = 200;
-var echoLength = 3;
+/************
+ DEFINITIONS
+************/
 
-var enemies = [];
+// objects
+var game = {
+  isStarted: false,
+  isFadeOut: false,
+  currentLevel: 0,
+  deathCount: 0
+};
 var player = {
   isDead: false,
-  hasPowerUp: false
+  hasPowerUp: false,
+  isVisible: true
 };
-var isGameStarted = false;
-var isGamePaused = false;
-var currentLevel = 0;
-var numberOfDeaths = 0;
-var whiteVal = 255;
-var blackVal = 0;
+var enemies = [];
+var powerUp = null;
 
+// design
+var colors = {
+  white: 255,
+  backgroundGrey: 200,
+  grey: 160,
+  darkGrey: 90,
+  black: 0
+};
+var windowPadding = 15;
+
+// config
 var difficultyMap = [1, .75, .6, .45, .3, .15];
 var currentDifficulty = 0;
 var difficultyCurve = .2; //todo: make user-selectable
+var echoLength = 3;
+var lfoSeed = 0;
 
-var powerUp = null;
+// calculators
+var getPauseLength = () => 100 / difficultyCurve - game.currentLevel;
+
+/**********
+ LIFECYCLE
+**********/
 
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   strokeWeight(0);
-  background(backgroundColor);
+  background(colors.backgroundGrey);
+  noCursor();
+  textSize(20);
+  textFont('Helvetica');
 }
 
 function draw() {
-  if (isGameStarted && !isGamePaused) {
+  noCursor();
+  if (game.isStarted && !game.isFadeOut) {
     if (player.isDead) {
       displayTextDialog('you suck');
+      background(random(0,100), random(0,100), random(0,100), 1);
+      drawPlayer();
       return;
     }
     // actual render loop
-    background(backgroundColor);
-    if (enemies.length > 0) {
-      drawAllEnemies();
-    } else {
-      incrementLevel();
-      drawAllEnemies();
-      isGamePaused = true;
-      setTimeout(() => {
-        isGamePaused = false;
-      }, 100 / difficultyCurve);
-    }
+    background(colors.backgroundGrey);
+
     if (powerUp) {
       powerUp.drawSelf();
       powerUp.update();
     }
+    if (enemies.length > 0) {
+      // active game session
+      drawAllEnemies();
+    } else {
+      incrementLevel();
+      drawAllEnemies();
+      game.isFadeOut = true;
+      pauseTimer = (10 * 1/difficultyCurve) - game.currentLevel;
+    }
     textAlign(RIGHT, TOP);
-    fill(blackVal);
-    text(`level: ${currentLevel}`, width - 10, 10);
+    fill(colors.darkGrey);
+    text(`level: ${game.currentLevel}`, width - windowPadding, windowPadding);
     textAlign(LEFT, TOP);
-    text(`deaths: ${numberOfDeaths}`, 10, 10);
-  } else if (isGamePaused) {
+    text(`deaths: ${game.deathCount}`, windowPadding, windowPadding);
+    drawPlayer();
+  } else if (game.isFadeOut) {
+    const increasingDarkness = color(random(0,30), random(0,30), random(0,30));
+    increasingDarkness.setAlpha(20);
+    fill(increasingDarkness); // me_irl
+    rect(width/2, height/2, width, height);
+    pauseTimer--;
+    if (pauseTimer === 0) {
+      game.isFadeOut = false;
+    }
+    drawPlayer();
+    if (powerUp) {
+      powerUp.drawSelf();
+      powerUp.update();
+    }
     return;
   } else {
     displayTextDialog('click here to begin');
+    cursor();
   }
 }
 
+/***************
+ EVENT HANDLERS
+***************/
+
 function mouseClicked() {
-  if (!isGameStarted) {
-    isGameStarted = true;
+  if (!game.isStarted) {
+    game.isStarted = true;
     return;
   }
   if (player.isDead) {
-    numberOfDeaths++;
+    game.deathCount++;
     player = {
       isDead: false,
-      hasPowerUp: false
+      hasPowerUp: false,
+      isVisible: true
     };
     powerUp = null;
-    isGameStarted = false;
-    currentLevel = 1;
+    game.isStarted = false;
+    game.currentLevel = 1;
     enemies = [];
     createEnemy();
     return;
   }
+}
+
+function mouseReleased() {
   if (player.hasPowerUp && powerUp) {
     powerUp.use();
   }
 }
 
-// CLASSES
+/*********
+ CLASSES
+*********/
 
 function Enemy(initOptions) {
   const { initX, initY, initSize, initSpeed, shrinkRate } = initOptions;
@@ -116,19 +168,21 @@ function Enemy(initOptions) {
         this.size -= .1 + this.shrinkRate/1000;
       }
       if (this.size <= 0) {
+        console.log(this.size);
         killEnemy(this);
       }
     }
   };
   this.drawSelf = function() {
     if (!player.isDead && this.size > 0) {
-      fill(whiteVal);
+      fill(colors.white);
       ellipse(this.x, this.y, this.size, this.size);
     }
   };
   this.isCollisionWithMouse = () => collisionDetection(this);
   this.isCollisionWithPowerUp = () => collisionDetection(this, powerUp);
-  // GRAPHIX
+
+  // exhaust animation
   this.drawEcho = function() {
     this.echoAngle += .9;
     if (this.echoAngle >= 360) {
@@ -150,7 +204,7 @@ function Enemy(initOptions) {
 
     for (var k=0; k<this.echoMap.length; k++) {
       var percentage = k/this.echoMap.length;
-      const colorObj = lerpColor(color(blackVal), color(whiteVal), percentage);
+      const colorObj = lerpColor(color(colors.black), color(colors.white), percentage);
       colorObj.setAlpha(percentage * 255 - 50);
       fill(colorObj);
 
@@ -158,10 +212,6 @@ function Enemy(initOptions) {
       var posY = fudge(this.echoMap[k].y, .5);
       var exhaustSize = this.size - (10/echoLength)*(this.echoMap.length-k);
       ellipse(posX, posY, exhaustSize, exhaustSize);
-      if (k === this.echoMap.length - 1) {
-        // last time 'round, reset the fill
-        fill(whiteVal);
-      }
     }
   };
 }
@@ -204,7 +254,7 @@ function PowerUp(initOptions) {
     } else {
       ellipse(this.x, this.y, this.size, this.size);
     }
-    fill(blackVal);
+    fill(colors.black);
   }
 
   this.isCollisionWithMouse = () => collisionDetection(this);
@@ -218,14 +268,20 @@ function PowerUp(initOptions) {
   }
 }
 
-// HELPERS
+/********
+ HELPERS
+********/
+
 function displayTextDialog(textToDisplay) {
-  fill(whiteVal);
   rectMode(CENTER);
+  // grey backdrop
+  fill(colors.grey);
+  rect(width/2 + 12, height/2 + 12, width/2, height/4);
+  // white rect
+  fill(colors.white);
   rect(width/2, height/2, width/2, height/4);
   textAlign(CENTER, CENTER);
-  textSize(18);
-  fill(blackVal);
+  fill(colors.black);
   text(textToDisplay, width/2, height/2);
 }
 
@@ -238,13 +294,14 @@ function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: 0 }) {
 };
 
 function incrementLevel() {
-  currentLevel++;
-  for (var j=0; j<currentLevel; j++) {
+  game.currentLevel++;
+  for (var j=0; j<game.currentLevel; j++) {
     if(random(0, 1) < difficultyMap[Math.floor(currentDifficulty)]) {
       createEnemy();
     }
   }
-  if (currentLevel % 3 === 0
+  if (
+    game.currentLevel % 3 === 0
     && !player.hasPowerUp
     && !powerUp
   ) {
@@ -259,13 +316,11 @@ function incrementLevel() {
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  // var initSize = random(currentLevel + 10, currentLevel * 1/difficultyCurve + 100);
-  var initSpeed = 3 + random(0, currentLevel * difficultyCurve);
-  var shrinkRate = random(-1*difficultyCurve, currentLevel);
+  var initSize = random(fudge(20, game.currentLevel), fudge(100, game.currentLevel * 1/difficultyCurve));
+  var initSpeed = 3 + random(0, game.currentLevel * difficultyCurve);
+  var shrinkRate = random(-1*difficultyCurve, game.currentLevel);
 
-  var initSize = random(fudge(20, currentLevel), fudge(100, currentLevel * 1/difficultyCurve));
-
-  // init position shouldn't === mouse position...that's just evil.
+  // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
   var isGuaranteedCollision = collisionDetection({ x: initX, y: initY, size: initSize + 20 });
   return enemies.push(new Enemy({
@@ -278,7 +333,7 @@ function createEnemy() {
 }
 
 function killEnemy(enemy) {
-  enemies.splice(enemies.indexOf(this), 1);
+  enemies.splice(enemies.indexOf(enemy), 1);
 }
 
 function drawAllEnemies() {
@@ -289,7 +344,24 @@ function drawAllEnemies() {
   }
 }
 
-// utility
+function drawPlayer() {
+  lfoSeed+= 1;
+  if (lfoSeed >= 360) {
+    lfoSeed = 0;
+  }
+  var lfoVal = sin(lfoSeed);
+  var isPlayerInBounds = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
+  if (player.isVisible && isPlayerInBounds) {
+    fill(colors.grey);
+    circle(mouseX, mouseY, 5, 5);
+    fill(colors.darkGrey);
+  }
+}
+
+/**********
+ UTILITIES
+**********/
+
 function fudge(inputVal, pct) {
   return inputVal + random(-pct/100 * inputVal, pct/100 * inputVal);
 }
