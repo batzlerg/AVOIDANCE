@@ -31,7 +31,8 @@ var initPlayer = () => ({
   isDead: false,
   hasPowerUp: false,
   isVisible: true,
-  size: 5
+  size: 5,
+  deathLocation: null
 });
 
 // game objects
@@ -74,6 +75,10 @@ function draw() {
   noCursor();
   if (game.isStarted && !game.isFadeOut) {
     if (player.isDead) {
+      if (player.deathLocation) {
+        fill('red');
+        circle(player.deathLocation.x, player.deathLocation.y, player.size, player.size);
+      }
       displayTextDialog(youLoseMessage);
       background(random(0,100), random(0,100), random(0,100), 1);
       drawPlayer();
@@ -170,8 +175,7 @@ function Enemy(initOptions) {
   this.update = function() {
     if (this.isCollisionWithMouse()) {
       player.isDead = true;
-      fill('red');
-      circle(mouseX, mouseY, player.size, player.size);
+      player.deathLocation = {x: mouseX, y: mouseY};
     }
     if (powerUp && powerUp.stepsUntilDeath && this.isCollisionWithPowerUp()) {
       killEnemy(this);
@@ -312,7 +316,7 @@ function displayTextDialog(textToDisplay) {
   text(textToDisplay, width/2, height/2);
 }
 
-function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: 0 }) {
+function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
   // "size" param is diameter, we need radius...hence size / 2
   var isCollisionX = Math.abs(objB.x - objA.x) <= (objA.size/2 + objB.size/2);
   var isCollisionY = Math.abs(objB.y - objA.y) <= (objA.size/2 + objB.size/2);
