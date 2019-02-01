@@ -32,13 +32,14 @@ var windowPadding = 15;
 
 // config
 var difficultyMap = [1, .75, .6, .45, .3, .15];
-var currentDifficulty = 0;
 var difficultyCurve = .2; //todo: make user-selectable
+var enemySpawnRate = 0;
 var echoLength = 3;
-var lfoSeed = 0;
+var fadeInRamp = 30;
 
-// calculators
-var getPauseLength = () => 100 / difficultyCurve - game.currentLevel;
+// other stuff
+var pauseTimer = 0;
+var lfoSeed = 0;
 
 /**********
  LIFECYCLE
@@ -74,7 +75,6 @@ function draw() {
       drawAllEnemies();
     } else {
       incrementLevel();
-      drawAllEnemies();
       game.isFadeOut = true;
       pauseTimer = (10 * 1/difficultyCurve) - game.currentLevel;
     }
@@ -90,6 +90,10 @@ function draw() {
     fill(increasingDarkness); // me_irl
     rect(width/2, height/2, width, height);
     pauseTimer--;
+
+    if (pauseTimer < fadeInRamp) {
+      drawAllEnemies({ fadeIn: true });
+    }
     if (pauseTimer === 0) {
       game.isFadeOut = false;
     }
@@ -176,6 +180,14 @@ function Enemy(initOptions) {
   this.drawSelf = function() {
     if (!player.isDead && this.size > 0) {
       fill(colors.white);
+      ellipse(this.x, this.y, this.size, this.size);
+    }
+  };
+  this.drawSelfTranslucent = function() {
+    if (!player.isDead && this.size > 0) {
+      const translucentWhite = color(colors.white);
+      translucentWhite.setAlpha(1/difficultyCurve - game.currentLevel);
+      fill(translucentWhite);
       ellipse(this.x, this.y, this.size, this.size);
     }
   };
@@ -296,7 +308,7 @@ function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: 0 }) {
 function incrementLevel() {
   game.currentLevel++;
   for (var j=0; j<game.currentLevel; j++) {
-    if(random(0, 1) < difficultyMap[Math.floor(currentDifficulty)]) {
+    if(random(0, 1) < difficultyMap[Math.floor(enemySpawnRate)]) {
       createEnemy();
     }
   }
@@ -309,7 +321,7 @@ function incrementLevel() {
       x: random(0, width),
       y: random(0, height)
     });
-    currentDifficulty += difficultyCurve;
+    enemySpawnRate += difficultyCurve;
   }
 }
 
@@ -336,11 +348,15 @@ function killEnemy(enemy) {
   enemies.splice(enemies.indexOf(enemy), 1);
 }
 
-function drawAllEnemies() {
+function drawAllEnemies(options = {}) {
   for (var i=0; i<enemies.length; i++) {
-    enemies[i].drawEcho();
-    enemies[i].drawSelf();
-    enemies[i].update();
+    if (options.fadeIn) {
+      enemies[i].drawSelfTranslucent();
+    } else {
+      enemies[i].drawEcho();
+      enemies[i].drawSelf();
+      enemies[i].update();
+    }
   }
 }
 
