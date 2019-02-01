@@ -21,6 +21,7 @@ var colors = {
   black: 80
 };
 var windowPadding = 15;
+var defaultFontSize = 22;
 
 // other stuff
 var pauseTimer = 0;
@@ -67,7 +68,7 @@ function setup() {
   strokeWeight(0);
   background(colors.backgroundGrey);
   noCursor();
-  textSize(22);
+  textSize(defaultFontSize);
   textFont('Helvetica');
 }
 
@@ -410,8 +411,8 @@ function drawPlayer() {
     lfoSeed = 0;
   }
   var lfoVal = sin(lfoSeed);
-  var isPlayerInBounds = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
-  if (player.isVisible && isPlayerInBounds) {
+  var isPlayerOnScreen = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
+  if (player.isVisible && isPlayerOnScreen) {
     fill(colors.grey);
     circle(mouseX, mouseY, player.size, player.size);
     fill(colors.darkGrey);
