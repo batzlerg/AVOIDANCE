@@ -88,7 +88,7 @@ function draw() {
     if (player.isDead) {
       if (player.deathLocation) {
         fill('red');
-        circle(player.deathLocation.x, player.deathLocation.y, player.size, player.size);
+        circle(player.deathLocation.x, player.deathLocation.y, player.size);
       }
       displayTextDialog(youLoseMessage);
       background(random(0,100), random(0,100), random(0,100), 1);
@@ -214,7 +214,7 @@ function Enemy(initOptions) {
   this.drawSelf = function() {
     if (!player.isDead && this.size > 0) {
       fill(colors.white);
-      ellipse(this.x, this.y, this.size, this.size);
+      circle(this.x, this.y, this.size);
     }
   };
   this.drawSelfTranslucent = function() {
@@ -222,7 +222,7 @@ function Enemy(initOptions) {
       const translucentWhite = color(colors.white);
       translucentWhite.setAlpha(1/difficultyCurve);
       fill(translucentWhite);
-      ellipse(this.x, this.y, this.size, this.size);
+      circle(this.x, this.y, this.size);
     }
   };
   this.isCollisionWithMouse = () => collisionDetection(this);
@@ -257,7 +257,7 @@ function Enemy(initOptions) {
       var posX = fudge(this.echoMap[k].x, .5);
       var posY = fudge(this.echoMap[k].y, .5);
       var exhaustSize = this.size - (10/echoLength)*(this.echoMap.length-k);
-      ellipse(posX, posY, exhaustSize, exhaustSize);
+      circle(posX, posY, exhaustSize);
     }
   };
 }
@@ -302,7 +302,7 @@ function PowerUp(initOptions) {
             this.seedAngle = 0;
           }
           var sinVal = sin(this.seedAngle);
-          this.size = 5*sinVal + 25;
+          this.size = player.size * 3 + sinVal;
           this.colorObjs[this.type].setAlpha(100*sinVal + 155);
         }
         break;
@@ -321,10 +321,22 @@ function PowerUp(initOptions) {
           this.colorObjs[this.type].setAlpha(255);
         } else if (this.isTriggered) {
           this.stepsUntilActive--;
+          this.seedAngle += .3;
+          if (this.seedAngle >= 360) {
+            this.seedAngle = 0;
+          }
+          var sinVal = sin(this.seedAngle);
+          this.size = player.size * 3 + sinVal;
           if (this.stepsUntilActive <= 0) {
             this.isActive = true;
           }
           this.colorObjs[this.type].setAlpha(map(this.stepsUntilActive, 0, this.durations[this.type], 0, 255));
+          // draw color-coded detonation indicator
+          noFill();
+          strokeWeight(2);
+          stroke(this.colorObjs[this.type]);
+          circle(mouseX, mouseY, player.size + sinVal);
+          noStroke();
         } else {
           if (!player.hasPowerUp && this.isCollisionWithMouse()) {
             player.hasPowerUp = true;
@@ -334,7 +346,7 @@ function PowerUp(initOptions) {
             this.seedAngle = 0;
           }
           var sinVal = sin(this.seedAngle);
-          this.size = 5*sinVal + 25;
+          this.size = 3*sinVal + player.size*3;
           this.colorObjs[this.type].setAlpha(100*sinVal + 155);
         }
         break;
@@ -344,9 +356,9 @@ function PowerUp(initOptions) {
   this.drawSelf = function() {
     fill(this.colorObjs[this.type]);
     if (player.hasPowerUp) {
-      ellipse(mouseX, mouseY, this.size, this.size);
+      circle(mouseX, mouseY, this.size);
     } else {
-      ellipse(this.x, this.y, this.size, this.size);
+      circle(this.x, this.y, this.size);
     }
     fill(colors.black);
   }
@@ -404,7 +416,7 @@ function displayIntroDialog() {
     fill(fudge(colors.lightGrey,20));
     var circleLocation = { x: random(0, width), y: random(0, height), size: 100 };
     if (!collisionDetection(circleLocation)) {
-      circle(circleLocation.x, circleLocation.y, 1, 1);
+      circle(circleLocation.x, circleLocation.y, 1);
     }
   }
   drawDialogBox();
@@ -424,9 +436,9 @@ function displayIntroDialog() {
 }
 
 function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
-  // "size" param is diameter, we need radius...hence size / 2
-  var isCollisionX = Math.abs(objB.x - objA.x) <= (objA.size/2 + objB.size/2);
-  var isCollisionY = Math.abs(objB.y - objA.y) <= (objA.size/2 + objB.size/2);
+  // todo: circular hit boxes
+  var isCollisionX = Math.abs(objB.x - objA.x) <= (objA.size + objB.size);
+  var isCollisionY = Math.abs(objB.y - objA.y) <= (objA.size + objB.size);
 
   return isCollisionX && isCollisionY;
 };
@@ -508,7 +520,7 @@ function drawPlayer() {
   var isPlayerOnScreen = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
   if (player.isVisible && isPlayerOnScreen) {
     fill(colors.grey);
-    circle(mouseX, mouseY, player.size, player.size);
+    circle(mouseX, mouseY, player.size);
     fill(colors.darkGrey);
   }
 }
