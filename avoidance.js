@@ -11,10 +11,12 @@ var difficultyCurve = .2; //todo: make user-selectable
 var enemySpawnRate = 0;
 var echoLength = 3;
 var nightVisionFadeInTime = 30;
+var mainTitle = 'AVOIDANCE';
 
 // design
 var colors = {
   white: 255,
+  lightGrey: 230,
   backgroundGrey: 200,
   grey: 160,
   darkGrey: 90,
@@ -22,6 +24,9 @@ var colors = {
 };
 var windowPadding = 15;
 var defaultFontSize = 22;
+var mainTitleFontSize = 40;
+var mainTitleFuzziness = 800;
+var mainTitleFadeInTime = 450;
 
 // other stuff
 var pauseTimer = 0;
@@ -70,6 +75,7 @@ var youLoseMessage = getYouLoseMessage();
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   strokeWeight(0);
+  fill(colors.black);
   background(colors.backgroundGrey);
   noCursor();
   textSize(defaultFontSize);
@@ -109,6 +115,7 @@ function draw() {
       drawPlayer();
     }
   } else if (game.isFadeOut) {
+    rectMode(CENTER);
     const increasingDarkness = color(random(0,30), random(0,30), random(0,30));
     increasingDarkness.setAlpha(20);
     fill(increasingDarkness); // me_irl
@@ -332,7 +339,6 @@ function PowerUp(initOptions) {
         }
         break;
     }
-
   }
 
   this.drawSelf = function() {
@@ -386,14 +392,33 @@ function displayTextDialog(textToDisplay) {
 }
 
 function displayIntroDialog() {
-  drawDialogBox();
   textAlign(CENTER, CENTER);
-  fill(colors.black);
   push();
+  var translucentGreyFill = color(colors.darkGrey);
+  translucentGreyFill.setAlpha(30);
+  fill(translucentGreyFill);
+  rectMode(CORNER);
+  rect(0, 0, width, height);
+  var fuzzTime = mainTitleFuzziness/10000 - mainTitleFadeInTime;
+  for (var f=mainTitleFuzziness; f>fuzzTime; f--) {
+    fill(fudge(colors.lightGrey,20));
+    var circleLocation = { x: random(0, width), y: random(0, height), size: 100 };
+    if (!collisionDetection(circleLocation)) {
+      circle(circleLocation.x, circleLocation.y, 1, 1);
+    }
+  }
+  drawDialogBox();
+  fill(colors.white);
+  if (random(-6, 1) > 0) { // jitter
+    scale(1 + random(-.003, .003));
+  }
+  fill(colors.black);
   textFont('Courier New');
-  textSize(30);
+  textSize(mainTitleFontSize);
   textStyle('bold');
-  text('AVOIDANCE', width/2, height/2 - 30);
+  var mainTitleX = width/2;
+  var mainTitleY = height/2 - 30;
+  text(mainTitle, mainTitleX, mainTitleY);
   pop();
   text('click here to begin', width/2, height/2 + 30);
 }
