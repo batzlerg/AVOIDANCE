@@ -24,9 +24,13 @@ var colors = {
 };
 var windowPadding = 15;
 var defaultFontSize = 22;
-var mainTitleFontSize = 40;
-var mainTitleFuzziness = 800;
-var mainTitleFadeInTime = 450;
+var mainTitlePrefs = {
+  fontSize: 40,
+  fuzzDensity: 200,
+  fadeInAlpha: 30,
+  fadeInTint: 10,
+  filter: 10
+};
 
 // other stuff
 var pauseTimer = 0;
@@ -91,7 +95,7 @@ function draw() {
         circle(player.deathLocation.x, player.deathLocation.y, player.size);
       }
       displayTextDialog(youLoseMessage);
-      background(random(0,100), random(0,100), random(0,100), 1);
+      fillWithIncreasingDarkness({ alpha: 1, tint: 0 });
       drawPlayer();
       return;
     }
@@ -115,11 +119,7 @@ function draw() {
       drawPlayer();
     }
   } else if (game.isFadeOut) {
-    rectMode(CENTER);
-    const increasingDarkness = color(random(0,30), random(0,30), random(0,30));
-    increasingDarkness.setAlpha(20);
-    fill(increasingDarkness); // me_irl
-    rect(width/2, height/2, width, height);
+    fillWithIncreasingDarkness({ alpha: 20, tint: 30 }); //me_irl
     pauseTimer--;
 
     if (game.nightVisionEnabled) {
@@ -137,7 +137,7 @@ function draw() {
     }
     return;
   } else {
-    displayIntroDialog();
+    displayIntroScreen();
     cursor();
   }
 }
@@ -433,20 +433,25 @@ function displayTextDialog(textToDisplay) {
   text(textToDisplay, width/2, height/2);
 }
 
-function displayIntroDialog() {
+function displayIntroScreen() {
   textAlign(CENTER, CENTER);
   push();
-  var translucentGreyFill = color(colors.darkGrey);
-  translucentGreyFill.setAlpha(30);
-  fill(translucentGreyFill);
+  fillWithIncreasingDarkness({
+    alpha: mainTitlePrefs.fadeInAlpha,
+    tint: mouseIsPressed ? mainTitlePrefs.fadeInTint + game.mouseHoldTime : mainTitlePrefs.fadeInTint
+  });
+  var filter = color(colors.darkGrey);
+  filter.setAlpha(mainTitlePrefs.filter);
+  fill(filter);
   rectMode(CORNER);
   rect(0, 0, width, height);
-  var fuzzTime = mainTitleFuzziness/10000 - mainTitleFadeInTime;
-  for (var f=mainTitleFuzziness; f>fuzzTime; f--) {
-    fill(fudge(colors.lightGrey,20));
-    var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 70) };
-    if (!collisionDetection(circleLocation)) {
-      circle(circleLocation.x, circleLocation.y, 1);
+  if (random(-1, 1) > 0) {
+    for (var f=0; f<mainTitlePrefs.fuzzDensity; f++) {
+      fill(fudge(colors.grey,20));
+      var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 70) };
+      if (!collisionDetection(circleLocation)) {
+        circle(circleLocation.x, circleLocation.y, 1);
+      }
     }
   }
   drawDialogBox();
@@ -456,7 +461,7 @@ function displayIntroDialog() {
   }
   fill(colors.charcoal);
   textFont('Courier New');
-  textSize(mainTitleFontSize);
+  textSize(mainTitlePrefs.fontSize);
   textStyle('bold');
   var mainTitleX = width/2;
   var mainTitleY = height/2 - 30;
@@ -560,4 +565,16 @@ function drawPlayer() {
 
 function fudge(inputVal, pct) {
   return inputVal + random(-pct/100 * inputVal, pct/100 * inputVal);
+}
+
+const getColor = range => map(random(0,255), 0, 255, 0, range);
+
+function fillWithIncreasingDarkness({ alpha, tint }) {
+  push();
+  rectMode(CORNER);
+  const increasingDarkness = color(getColor(tint), getColor(tint), getColor(tint));
+  increasingDarkness.setAlpha(alpha);
+  fill(increasingDarkness); // me_irl
+  rect(0, 0, width, height);
+  pop();
 }
