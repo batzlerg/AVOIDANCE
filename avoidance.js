@@ -414,7 +414,7 @@ function displayIntroDialog() {
   var fuzzTime = mainTitleFuzziness/10000 - mainTitleFadeInTime;
   for (var f=mainTitleFuzziness; f>fuzzTime; f--) {
     fill(fudge(colors.lightGrey,20));
-    var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 50) };
+    var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 70) };
     if (!collisionDetection(circleLocation)) {
       circle(circleLocation.x, circleLocation.y, 1);
     }
@@ -432,6 +432,7 @@ function displayIntroDialog() {
   var mainTitleY = height/2 - 30;
   text(mainTitle, mainTitleX, mainTitleY);
   pop();
+  fill(colors.grey);
   text('click anywhere to begin', width/2, height/2 + 30);
 }
 
