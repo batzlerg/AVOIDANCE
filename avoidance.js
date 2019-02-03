@@ -256,7 +256,7 @@ function Enemy(initOptions) {
   this.drawSelfTranslucent = function() {
     if (!player.isDead && this.size > 0) {
       const translucentWhite = color(colors.white);
-      translucentWhite.setAlpha(map(difficultyCurve, 0, 1, 2, 10));
+      translucentWhite.setAlpha(map(difficultyCurve, 0, 1, 10, 2));
       fill(translucentWhite);
       circle(this.x, this.y, this.size);
     }
