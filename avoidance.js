@@ -436,11 +436,9 @@ function displayIntroDialog() {
 }
 
 function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
-  // todo: circular hit boxes
-  var isCollisionX = Math.abs(objB.x - objA.x) <= (objA.size + objB.size);
-  var isCollisionY = Math.abs(objB.y - objA.y) <= (objA.size + objB.size);
-
-  return isCollisionX && isCollisionY;
+  var diffX = Math.abs(objB.x - objA.x);
+  var diffY = Math.abs(objB.y - objA.y);
+  return Math.sqrt(diffX*diffX + diffY*diffY) < objA.size + objB.size;
 };
 
 function incrementLevel() {
