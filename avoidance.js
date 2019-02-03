@@ -52,7 +52,8 @@ var game = {
   currentLevel: 0,
   enemySpawnRate: 0,
   deathCount: 0,
-  nightVisionEnabled: true
+  nightVisionEnabled: true,
+  mouseHoldTime: 0
 };
 var player = initPlayer();
 var enemies = [];
@@ -89,6 +90,9 @@ function setup() {
 
 function draw() {
   noCursor();
+  if (mouseIsPressed && game.mouseHoldTime < 1000) {
+    game.mouseHoldTime++;
+  }
   if (game.isStarted && !game.isFadeOut) {
     if (player.isDead) {
       if (player.deathLocation) {
@@ -158,14 +162,14 @@ function mouseClicked() {
     player = initPlayer();
     powerUp = null;
     game.isStarted = false;
-    game.currentLevel = 1;
+    game.currentLevel = 0;
     enemies = [];
-    createEnemy();
     return;
   }
 }
 
 function mouseReleased() {
+  game.mouseHoldTime = 0;
   if (player.hasPowerUp && powerUp) {
     powerUp.use();
   } else if (powerUp && powerUp.isTriggered) {
