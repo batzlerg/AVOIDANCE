@@ -19,7 +19,8 @@ var colors = {
   backgroundGrey: 200,
   grey: 160,
   darkGrey: 90,
-  black: 80
+  charcoal: 70,
+  black: 20
 };
 var windowPadding = 15;
 var defaultFontSize = 22;
@@ -74,7 +75,7 @@ var youLoseMessage = getYouLoseMessage();
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   strokeWeight(0);
-  fill(colors.black);
+  fill(colors.charcoal);
   background(colors.backgroundGrey);
   noCursor();
   textSize(defaultFontSize);
@@ -279,7 +280,7 @@ function Enemy(initOptions) {
 
     for (var k=0; k<this.echoMap.length; k++) {
       var percentage = k/this.echoMap.length;
-      const colorObj = lerpColor(color(colors.black), color(colors.white), percentage);
+      const colorObj = lerpColor(color(colors.charcoal), color(colors.white), percentage);
       colorObj.setAlpha(percentage * 255 - 50);
       fill(colorObj);
 
@@ -389,7 +390,7 @@ function PowerUp(initOptions) {
     } else {
       circle(this.x, this.y, this.size);
     }
-    fill(colors.black);
+    fill(colors.charcoal);
   }
 
   this.isCollisionWithMouse = () => collisionDetection(this);
@@ -428,7 +429,7 @@ function drawDialogBox() {
 function displayTextDialog(textToDisplay) {
   drawDialogBox();
   textAlign(CENTER, CENTER);
-  fill(colors.black);
+  fill(colors.charcoal);
   text(textToDisplay, width/2, height/2);
 }
 
@@ -453,7 +454,7 @@ function displayIntroDialog() {
   if (random(-6, 1) > 0) { // jitter
     scale(1 + random(-.003, .003));
   }
-  fill(colors.black);
+  fill(colors.charcoal);
   textFont('Courier New');
   textSize(mainTitleFontSize);
   textStyle('bold');
@@ -532,7 +533,7 @@ function drawAllEnemies(options = {}) {
 }
 
 function drawHeader() {
-  fill(player.isDead ? colors.black : colors.darkGrey);
+  fill(player.isDead ? colors.charcoal : colors.darkGrey);
   textAlign(RIGHT, TOP);
   text(`level: ${game.currentLevel}`, width - windowPadding, windowPadding);
   textAlign(LEFT, TOP);
