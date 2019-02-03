@@ -50,6 +50,7 @@ var game = {
   isStarted: false,
   isFadeOut: false,
   currentLevel: 0,
+  enemySpawnRate: 0,
   deathCount: 0,
   nightVisionEnabled: true
 };
@@ -479,8 +480,10 @@ function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.si
 
 function incrementLevel() {
   game.currentLevel++;
+  game.enemySpawnRate = 1.5 * game.currentLevel;
   for (var j=0; j<game.currentLevel; j++) {
-    if(random(0, 1) < difficultyMap[Math.floor(enemySpawnRate)]) {
+    var rand = random(0, game.enemySpawnRate);
+    if(game.currentLevel < 3 || rand < game.currentLevel) {
       createEnemy();
     }
   }
@@ -499,7 +502,6 @@ function incrementLevel() {
       });
     }
   }
-  enemySpawnRate += difficultyCurve;
 }
 
 function createEnemy() {
