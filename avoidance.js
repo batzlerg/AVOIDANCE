@@ -414,7 +414,7 @@ function displayIntroDialog() {
   var fuzzTime = mainTitleFuzziness/10000 - mainTitleFadeInTime;
   for (var f=mainTitleFuzziness; f>fuzzTime; f--) {
     fill(fudge(colors.lightGrey,20));
-    var circleLocation = { x: random(0, width), y: random(0, height), size: 100 };
+    var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 50) };
     if (!collisionDetection(circleLocation)) {
       circle(circleLocation.x, circleLocation.y, 1);
     }
