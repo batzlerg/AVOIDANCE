@@ -7,10 +7,9 @@
 
 // config
 var difficultyMap = [1, .75, .6, .45, .3, .15];
-var difficultyCurve = .2; //todo: make user-selectable
+var difficultyCurve = 1; //todo: make user-selectable
 var enemySpawnRate = 0;
 var echoLength = 3;
-var nightVisionFadeInTime = 30;
 var mainTitle = 'AVOIDANCE';
 
 // design
@@ -108,7 +107,7 @@ function draw() {
     } else {
       incrementLevel();
       game.isFadeOut = true;
-      pauseTimer = (10 * 1/difficultyCurve);
+      pauseTimer = map(difficultyCurve, 0, 1, 20, 100);
     }
     drawHeader();
     if (!player.hasPowerUp) {
@@ -220,7 +219,7 @@ function Enemy(initOptions) {
   this.drawSelfTranslucent = function() {
     if (!player.isDead && this.size > 0) {
       const translucentWhite = color(colors.white);
-      translucentWhite.setAlpha(1/difficultyCurve);
+      translucentWhite.setAlpha(map(difficultyCurve, 0, 1, 2, 10));
       fill(translucentWhite);
       circle(this.x, this.y, this.size);
     }
@@ -470,9 +469,9 @@ function incrementLevel() {
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  var initSize = random(fudge(40, game.currentLevel), fudge(100, game.currentLevel * 1/difficultyCurve));
+  var initSize = random(fudge(40, game.currentLevel), fudge(100, game.currentLevel * map(difficultyCurve, 0, 1, 2, 10)));
   var initSpeed = 3 + random(0, game.currentLevel * difficultyCurve);
-  var shrinkRate = random(-1*difficultyCurve, .2/game.currentLevel);
+  var shrinkRate = random(-difficultyCurve, .2/game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
