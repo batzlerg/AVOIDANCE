@@ -432,7 +432,7 @@ function displayIntroDialog() {
   var mainTitleY = height/2 - 30;
   text(mainTitle, mainTitleX, mainTitleY);
   pop();
-  text('click here to begin', width/2, height/2 + 30);
+  text('click anywhere to begin', width/2, height/2 + 30);
 }
 
 function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
