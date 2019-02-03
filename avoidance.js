@@ -105,21 +105,22 @@ function draw() {
       return;
     }
     // actual render loop
-    background(colors.backgroundGrey);
 
+    if (enemies.length > 0) {
+      // active game session
+      background(colors.backgroundGrey);
+      drawAllEnemies();
+      drawHeader();
+    } else {
+      incrementLevel();
+      background(colors.black);
+      game.isFadeOut = true;
+      pauseTimer = map(difficultyCurve, 0, 1, 100, 20);
+    }
     if (powerUp) {
       powerUp.drawSelf();
       powerUp.update();
     }
-    if (enemies.length > 0) {
-      // active game session
-      drawAllEnemies();
-    } else {
-      incrementLevel();
-      game.isFadeOut = true;
-      pauseTimer = map(difficultyCurve, 0, 1, 20, 100);
-    }
-    drawHeader();
     if (!player.hasPowerUp) {
       drawPlayer();
     }
