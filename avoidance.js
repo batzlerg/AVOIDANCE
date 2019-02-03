@@ -512,9 +512,9 @@ function incrementLevel() {
 function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
-  var initSize = random(fudge(40, game.currentLevel), fudge(100, game.currentLevel * map(difficultyCurve, 0, 1, 2, 10)));
-  var initSpeed = 3 + random(0, game.currentLevel * difficultyCurve);
-  var shrinkRate = random(-difficultyCurve, .2/game.currentLevel);
+  var initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
+  var initSpeed = 3 + random(0, game.currentLevel/initSize);
+  var shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2/game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
