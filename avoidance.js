@@ -121,7 +121,7 @@ function draw() {
     rect(width/2, height/2, width, height);
     pauseTimer--;
 
-    if (game.nightVisionEnabled && pauseTimer < nightVisionFadeInTime) {
+    if (game.nightVisionEnabled) {
       drawAllEnemies({ fadeIn: true });
     }
     if (pauseTimer === 0) {
