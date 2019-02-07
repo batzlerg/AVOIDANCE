@@ -97,7 +97,10 @@ function draw() {
         fill('red');
         circle(player.deathLocation.x, player.deathLocation.y, player.size);
       }
-      fillWithIncreasingDarkness({ alpha: 1, tint: 0 });
+      fillWithIncreasingDarkness({
+        alpha: 1,
+        tint: 0
+      });
       displayTextDialog(youLoseMessage);
       displayCredit();
       drawPlayer();
@@ -124,11 +127,16 @@ function draw() {
       drawPlayer();
     }
   } else if (game.isFadeOut) {
-    fillWithIncreasingDarkness({ alpha: 20, tint: 30 }); //me_irl
+    fillWithIncreasingDarkness({
+      alpha: 20,
+      tint: 30
+    }); //me_irl
     pauseTimer--;
 
     if (game.nightVisionEnabled) {
-      drawAllEnemies({ fadeIn: true });
+      drawAllEnemies({
+        fadeIn: true
+      });
     }
     if (pauseTimer === 0) {
       game.isFadeOut = false;
@@ -184,7 +192,13 @@ function mouseReleased() {
 *********/
 
 function Enemy(initOptions) {
-  const { initX, initY, initSize, initSpeed, shrinkRate } = initOptions;
+  const {
+    initX,
+    initY,
+    initSize,
+    initSpeed,
+    shrinkRate
+  } = initOptions;
   this.x = initX;
   this.y = initY;
   this.speed = initSpeed;
@@ -200,7 +214,10 @@ function Enemy(initOptions) {
   this.update = function() {
     if (this.isCollisionWithMouse()) {
       player.isDead = true;
-      player.deathLocation = {x: mouseX, y: mouseY};
+      player.deathLocation = {
+        x: mouseX,
+        y: mouseY
+      };
     }
     if (powerUp && powerUp.isActive && this.isCollisionWithPowerUp()) {
       killEnemy(this);
@@ -239,7 +256,7 @@ function Enemy(initOptions) {
       }
       // cubic-bezier shrinkage
       if (this.size > 0) {
-        this.size -= 10/Math.abs(this.shrinkRate - (this.initSize * this.size)/50);
+        this.size -= 10 / Math.abs(this.shrinkRate - (this.initSize * this.size) / 50);
       }
       // ded
       if (this.size <= 0) {
@@ -271,7 +288,10 @@ function Enemy(initOptions) {
       this.echoAngle = 0;
     }
     var sinVal = sin(this.echoAngle);
-    var echoMapPoint = { x: this.x, y: this.y };
+    var echoMapPoint = {
+      x: this.x,
+      y: this.y
+    };
 
     if (!this.echoMap) {
       this.echoMap = new Array(echoMapPoint);
@@ -280,26 +300,30 @@ function Enemy(initOptions) {
         this.echoMap.push(echoMapPoint);
       }
       if (this.echoMap.length > echoLength) {
-        this.echoMap = this.echoMap.slice(1, echoLength+1);
+        this.echoMap = this.echoMap.slice(1, echoLength + 1);
       }
     }
 
-    for (var k=0; k<this.echoMap.length; k++) {
-      var percentage = k/this.echoMap.length;
+    for (var k = 0; k < this.echoMap.length; k++) {
+      var percentage = k / this.echoMap.length;
       const colorObj = lerpColor(color(colors.charcoal), color(colors.white), percentage);
       colorObj.setAlpha(percentage * 255 - 50);
       fill(colorObj);
 
       var posX = fudge(this.echoMap[k].x, .5);
       var posY = fudge(this.echoMap[k].y, .5);
-      var exhaustSize = this.size - (10/echoLength)*(this.echoMap.length-k);
+      var exhaustSize = this.size - (10 / echoLength) * (this.echoMap.length - k);
       circle(posX, posY, exhaustSize);
     }
   };
 }
 
 function PowerUp(initOptions) {
-  const { x, y, type } = initOptions;
+  const {
+    x,
+    y,
+    type
+  } = initOptions;
   this.x = x;
   this.y = y;
   this.type = type;
@@ -314,7 +338,7 @@ function PowerUp(initOptions) {
   };
   this.size = 0;
   this.isTriggered = false;
-  this.stepsUntilActive = this.durations[this.type]*3;
+  this.stepsUntilActive = this.durations[this.type] * 3;
   this.isActive = false;
   this.stepsUntilDeath = this.durations[this.type];
 
@@ -339,17 +363,17 @@ function PowerUp(initOptions) {
           }
           var sinVal = sin(this.seedAngle);
           this.size = player.size * 3 + sinVal;
-          this.colorObjs[this.type].setAlpha(100*sinVal + 155);
+          this.colorObjs[this.type].setAlpha(100 * sinVal + 155);
         }
         break;
       case powerUpColors.PURPLE:
         if (this.isActive) {
           // do explosion
           this.stepsUntilDeath--;
-          if (this.stepsUntilDeath < this.durations[this.type]/3) {
+          if (this.stepsUntilDeath < this.durations[this.type] / 3) {
             this.size -= this.size / (this.stepsUntilDeath + .1); // no division by zero in my house
           } else {
-            this.size = this.size + .4*this.stepsUntilDeath;
+            this.size = this.size + .4 * this.stepsUntilDeath;
           }
           if (!this.stepsUntilDeath) {
             powerUp = null;
@@ -382,8 +406,8 @@ function PowerUp(initOptions) {
             this.seedAngle = 0;
           }
           var sinVal = sin(this.seedAngle);
-          this.size = 3*sinVal + player.size*3;
-          this.colorObjs[this.type].setAlpha(100*sinVal + 155);
+          this.size = 3 * sinVal + player.size * 3;
+          this.colorObjs[this.type].setAlpha(100 * sinVal + 155);
         }
         break;
     }
@@ -426,28 +450,28 @@ function drawDialogBox() {
   rectMode(CENTER);
   // grey backdrop
   fill(colors.grey);
-  rect(width/2 + 12, height/2 + 12, width/2, height/4);
+  rect(width / 2 + 12, height / 2 + 12, width / 2, height / 4);
   // white rect
   fill(colors.white);
-  rect(width/2, height/2, width/2, height/4);
+  rect(width / 2, height / 2, width / 2, height / 4);
 }
 
 function displayTextDialog(textToDisplay) {
   drawDialogBox();
   textAlign(CENTER, CENTER);
   fill(colors.charcoal);
-  text(textToDisplay, width/2, height/2);
+  text(textToDisplay, width / 2, height / 2);
 }
 
 function displayCredit() {
   const creditBoxWidth = 180;
   const creditBoxHeight = 20;
-  const textX = width-(padding + creditBoxWidth/2)-padding/2;
-  const textY = height-(padding + creditBoxHeight/2)-padding/2;
+  const textX = width - (padding + creditBoxWidth / 2) - padding / 2;
+  const textY = height - (padding + creditBoxHeight / 2) - padding / 2;
   push();
   rectMode(CENTER);
   fill(colors.grey);
-  rect(textX, textY, creditBoxWidth + 2*padding, creditBoxHeight + 2*padding);
+  rect(textX, textY, creditBoxWidth + 2 * padding, creditBoxHeight + 2 * padding);
   textAlign(CENTER, CENTER);
   fill(colors.charcoal);
   textSize(14);
@@ -468,9 +492,13 @@ function displayIntroScreen() {
   rectMode(CORNER);
   rect(0, 0, width, height);
   if (random(-1, 1) > 0) {
-    for (var f=0; f<mainTitlePrefs.fuzzDensity; f++) {
-      fill(fudge(colors.grey,20));
-      var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 50) };
+    for (var f = 0; f < mainTitlePrefs.fuzzDensity; f++) {
+      fill(fudge(colors.grey, 20));
+      var circleLocation = {
+        x: random(0, width),
+        y: random(0, height),
+        size: fudge(100, 50)
+      };
       if (!collisionDetection(circleLocation)) {
         circle(circleLocation.x, circleLocation.y, 1);
       }
@@ -485,26 +513,30 @@ function displayIntroScreen() {
   textFont('Courier New');
   textSize(mainTitlePrefs.fontSize);
   textStyle('bold');
-  var mainTitleX = width/2;
-  var mainTitleY = height/2 - 30;
+  var mainTitleX = width / 2;
+  var mainTitleY = height / 2 - 30;
   text(mainTitle, mainTitleX, mainTitleY);
   pop();
   fill(colors.grey);
-  text('click anywhere to begin', width/2, height/2 + 30);
+  text('click anywhere to begin', width / 2, height / 2 + 30);
 }
 
-function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.size }) {
+function collisionDetection(objA, objB = {
+  x: mouseX,
+  y: mouseY,
+  size: player.size
+}) {
   var diffX = Math.abs(objB.x - objA.x);
   var diffY = Math.abs(objB.y - objA.y);
-  return Math.sqrt(diffX*diffX + diffY*diffY) < objA.size + objB.size;
+  return Math.sqrt(diffX * diffX + diffY * diffY) < objA.size + objB.size;
 };
 
 function incrementLevel() {
   game.currentLevel++;
-  const enemySpawnRate = (.8 + difficultyCurve/10) * game.currentLevel;
+  const enemySpawnRate = (.8 + difficultyCurve / 10) * game.currentLevel;
   const numberOfEnemies = game.currentLevel < 4 ? game.currentLevel : Math.floor(enemySpawnRate);
 
-  for (var j=0; j<numberOfEnemies; j++) {
+  for (var j = 0; j < numberOfEnemies; j++) {
     createEnemy();
   }
   if (!powerUp) {
@@ -528,12 +560,16 @@ function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
   var initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
-  var initSpeed = 4 + random(0, game.currentLevel/initSize);
-  var shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2/game.currentLevel);
+  var initSpeed = 4 + random(0, game.currentLevel / initSize);
+  var shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2 / game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
-  var isLikelyCollision = collisionDetection({ x: initX, y: initY, size: initSize + 20 });
+  var isLikelyCollision = collisionDetection({
+    x: initX,
+    y: initY,
+    size: initSize + 20
+  });
   return enemies.push(new Enemy({
     initX: isLikelyCollision ? initX + initSize : initX,
     initY: isLikelyCollision ? initY + initSize : initY,
@@ -548,7 +584,7 @@ function killEnemy(enemy) {
 }
 
 function drawAllEnemies(options = {}) {
-  for (var i=0; i<enemies.length; i++) {
+  for (var i = 0; i < enemies.length; i++) {
     if (options.fadeIn) {
       enemies[i].drawSelfTranslucent();
     } else {
@@ -568,7 +604,7 @@ function drawHeader() {
 }
 
 function drawPlayer() {
-  lfoSeed+= 1;
+  lfoSeed += 1;
   if (lfoSeed >= 360) {
     lfoSeed = 0;
   }
@@ -586,12 +622,15 @@ function drawPlayer() {
 **********/
 
 function fudge(inputVal, pct) {
-  return inputVal + random(-pct/100 * inputVal, pct/100 * inputVal);
+  return inputVal + random(-pct / 100 * inputVal, pct / 100 * inputVal);
 }
 
-const getColor = range => map(random(0,255), 0, 255, 0, range);
+const getColor = range => map(random(0, 255), 0, 255, 0, range);
 
-function fillWithIncreasingDarkness({ alpha, tint }) {
+function fillWithIncreasingDarkness({
+  alpha,
+  tint
+}) {
   push();
   rectMode(CORNER);
   const increasingDarkness = color(getColor(tint), getColor(tint), getColor(tint));
