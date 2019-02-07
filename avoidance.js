@@ -344,9 +344,9 @@ function PowerUp(initOptions) {
           // do explosion
           this.stepsUntilDeath--;
           if (this.stepsUntilDeath < this.durations[this.type]/3) {
-            this.size = this.size - .7*this.stepsUntilDeath;
+            this.size -= this.size / (this.stepsUntilDeath + .1); // no division by zero in my house
           } else {
-            this.size = this.size + .7*this.stepsUntilDeath;
+            this.size = this.size + .4*this.stepsUntilDeath;
           }
           if (!this.stepsUntilDeath) {
             powerUp = null;
@@ -451,7 +451,7 @@ function displayIntroScreen() {
   if (random(-1, 1) > 0) {
     for (var f=0; f<mainTitlePrefs.fuzzDensity; f++) {
       fill(fudge(colors.grey,20));
-      var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 70) };
+      var circleLocation = { x: random(0, width), y: random(0, height), size: fudge(100, 50) };
       if (!collisionDetection(circleLocation)) {
         circle(circleLocation.x, circleLocation.y, 1);
       }
@@ -509,7 +509,7 @@ function createEnemy() {
   var initX = random(0, width);
   var initY = random(0, height);
   var initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
-  var initSpeed = 3 + random(0, game.currentLevel/initSize);
+  var initSpeed = 4 + random(0, game.currentLevel/initSize);
   var shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2/game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
