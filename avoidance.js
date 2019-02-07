@@ -6,9 +6,7 @@
 ************/
 
 // config
-var difficultyMap = [1, .75, .6, .45, .3, .15];
-var difficultyCurve = 1; //todo: make user-selectable
-var enemySpawnRate = 0;
+var difficultyCurve = .5; //todo: make user-selectable
 var echoLength = 3;
 var mainTitle = 'AVOIDANCE';
 
@@ -50,7 +48,6 @@ var game = {
   isStarted: false,
   isFadeOut: false,
   currentLevel: 0,
-  enemySpawnRate: 0,
   deathCount: 0,
   nightVisionEnabled: true,
   mouseHoldTime: 0
@@ -485,12 +482,11 @@ function collisionDetection(objA, objB = { x: mouseX, y: mouseY, size: player.si
 
 function incrementLevel() {
   game.currentLevel++;
-  game.enemySpawnRate = 1.5 * game.currentLevel;
-  for (var j=0; j<game.currentLevel; j++) {
-    var rand = random(0, game.enemySpawnRate);
-    if(game.currentLevel < 3 || rand < game.currentLevel) {
-      createEnemy();
-    }
+  const enemySpawnRate = (.8 + difficultyCurve/10) * game.currentLevel;
+  const numberOfEnemies = game.currentLevel < 4 ? game.currentLevel : Math.floor(enemySpawnRate);
+
+  for (var j=0; j<numberOfEnemies; j++) {
+    createEnemy();
   }
   if (!powerUp) {
     if (game.currentLevel % 3 === 0) {
