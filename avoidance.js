@@ -9,6 +9,7 @@
 var difficultyCurve = .5; //todo: make user-selectable
 var echoLength = 3;
 var mainTitle = 'AVOIDANCE';
+var credit = `\u00A9 ${(new Date()).getFullYear()} https://grahammak.es`;
 
 // design
 var colors = {
@@ -20,7 +21,7 @@ var colors = {
   charcoal: 70,
   black: 20
 };
-var windowPadding = 15;
+var padding = 15;
 var defaultFontSize = 22;
 var mainTitlePrefs = {
   fontSize: 40,
@@ -96,8 +97,9 @@ function draw() {
         fill('red');
         circle(player.deathLocation.x, player.deathLocation.y, player.size);
       }
-      displayTextDialog(youLoseMessage);
       fillWithIncreasingDarkness({ alpha: 1, tint: 0 });
+      displayTextDialog(youLoseMessage);
+      displayCredit();
       drawPlayer();
       return;
     }
@@ -141,6 +143,7 @@ function draw() {
     return;
   } else {
     displayIntroScreen();
+    displayCredit();
     cursor();
   }
 }
@@ -436,6 +439,22 @@ function displayTextDialog(textToDisplay) {
   text(textToDisplay, width/2, height/2);
 }
 
+function displayCredit() {
+  const creditBoxWidth = 180;
+  const creditBoxHeight = 20;
+  const textX = width-(padding + creditBoxWidth/2)-padding/2;
+  const textY = height-(padding + creditBoxHeight/2)-padding/2;
+  push();
+  rectMode(CENTER);
+  fill(colors.grey);
+  rect(textX, textY, creditBoxWidth + 2*padding, creditBoxHeight + 2*padding);
+  textAlign(CENTER, CENTER);
+  fill(colors.charcoal);
+  textSize(14);
+  text(credit, textX, textY);
+  pop();
+}
+
 function displayIntroScreen() {
   textAlign(CENTER, CENTER);
   push();
@@ -543,9 +562,9 @@ function drawAllEnemies(options = {}) {
 function drawHeader() {
   fill(player.isDead ? colors.charcoal : colors.darkGrey);
   textAlign(RIGHT, TOP);
-  text(`level: ${game.currentLevel}`, width - windowPadding, windowPadding);
+  text(`level: ${game.currentLevel}`, width - padding, padding);
   textAlign(LEFT, TOP);
-  text(`deaths: ${game.deathCount}`, windowPadding, windowPadding);
+  text(`deaths: ${game.deathCount}`, padding, padding);
 }
 
 function drawPlayer() {
