@@ -467,7 +467,7 @@ function displayCredit() {
   const textY = height - (padding + creditBoxHeight / 2) - padding / 2;
   push();
   rectMode(CENTER);
-  fill(colors.grey);
+  fill(color(colors.lightGrey, 40));
   rect(textX, textY, creditBoxWidth + 2 * padding, creditBoxHeight + 2 * padding);
   textAlign(CENTER, CENTER);
   fill(colors.charcoal);
