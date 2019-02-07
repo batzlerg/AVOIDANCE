@@ -5,14 +5,12 @@
  DEFINITIONS
 ************/
 
-// config
-var difficultyCurve = .5; //todo: make user-selectable
-var echoLength = 3;
-var mainTitle = 'AVOIDANCE';
-var credit = `\u00A9 ${(new Date()).getFullYear()} https://grahammak.es`;
+const mainTitle = 'AVOIDANCE';
+const credit = `\u00A9 ${(new Date()).getFullYear()} https://grahammak.es`;
+const difficultyCurve = .5; //todo: make user-selectable
 
 // design
-var colors = {
+const colors = {
   white: 255,
   lightGrey: 230,
   backgroundGrey: 200,
@@ -21,22 +19,19 @@ var colors = {
   charcoal: 70,
   black: 20
 };
-var padding = 15;
-var defaultFontSize = 22;
-var mainTitlePrefs = {
+const padding = 15;
+const defaultFontSize = 22;
+const mainTitlePrefs = {
   fontSize: 40,
   fuzzDensity: 200,
   fadeInAlpha: 30,
   fadeInTint: 10,
   filter: 10
 };
-
-// other stuff
-var pauseTimer = 0;
-var lfoSeed = 0;
+const echoLength = 3;
 
 // initializers
-var initPlayer = () => ({
+const initPlayer = () => ({
   isDead: false,
   hasPowerUp: false,
   isVisible: true,
@@ -45,22 +40,23 @@ var initPlayer = () => ({
 });
 
 // game objects
-var game = {
+let player = initPlayer();
+let powerUp = null;
+let enemies = [];
+const game = {
   isStarted: false,
   isFadeOut: false,
   currentLevel: 0,
   deathCount: 0,
   nightVisionEnabled: true,
-  mouseHoldTime: 0
+  mouseHoldTime: 0,
+  pauseTimer: 0
 };
-var player = initPlayer();
-var enemies = [];
-var powerUp = null;
-var powerUpColors = {
+const powerUpColors = {
   YELLOW: 'yellow',
   PURPLE: 'purple'
 };
-var youLose = [
+const youLose = [
   'yikes',
   'and that\'s that',
   'no más',
@@ -69,8 +65,8 @@ var youLose = [
   'FIN',
   'ouch.'
 ];
-var getYouLoseMessage = () => youLose[Math.floor(Math.random() * Math.floor(youLose.length))];
-var youLoseMessage = getYouLoseMessage();
+const getYouLoseMessage = () => youLose[Math.floor(Math.random() * Math.floor(youLose.length))];
+let youLoseMessage = getYouLoseMessage();
 
 /**********
  LIFECYCLE
@@ -117,7 +113,7 @@ function draw() {
       incrementLevel();
       background(colors.black);
       game.isFadeOut = true;
-      pauseTimer = map(difficultyCurve, 0, 1, 100, 20);
+      game.pauseTimer = map(difficultyCurve, 0, 1, 100, 20);
     }
     if (powerUp) {
       powerUp.drawSelf();
@@ -131,14 +127,14 @@ function draw() {
       alpha: 20,
       tint: 30
     }); //me_irl
-    pauseTimer--;
+    game.pauseTimer--;
 
     if (game.nightVisionEnabled) {
       drawAllEnemies({
         fadeIn: true
       });
     }
-    if (pauseTimer === 0) {
+    if (game.pauseTimer === 0) {
       game.isFadeOut = false;
     }
     if (!player.hasPowerUp) {
@@ -287,8 +283,8 @@ function Enemy(initOptions) {
     if (this.echoAngle >= 360) {
       this.echoAngle = 0;
     }
-    var sinVal = sin(this.echoAngle);
-    var echoMapPoint = {
+    let sinVal = sin(this.echoAngle);
+    let echoMapPoint = {
       x: this.x,
       y: this.y
     };
@@ -304,15 +300,16 @@ function Enemy(initOptions) {
       }
     }
 
-    for (var k = 0; k < this.echoMap.length; k++) {
-      var percentage = k / this.echoMap.length;
-      const colorObj = lerpColor(color(colors.charcoal), color(colors.white), percentage);
+    let percentage, colorObj, posX, posY, exhaustSize;
+    for (let k = 0; k < this.echoMap.length; k++) {
+      percentage = k / this.echoMap.length;
+      colorObj = lerpColor(color(colors.charcoal), color(colors.white), percentage);
       colorObj.setAlpha(percentage * 255 - 50);
       fill(colorObj);
 
-      var posX = fudge(this.echoMap[k].x, .5);
-      var posY = fudge(this.echoMap[k].y, .5);
-      var exhaustSize = this.size - (10 / echoLength) * (this.echoMap.length - k);
+      posX = fudge(this.echoMap[k].x, .5);
+      posY = fudge(this.echoMap[k].y, .5);
+      exhaustSize = this.size - (10 / echoLength) * (this.echoMap.length - k);
       circle(posX, posY, exhaustSize);
     }
   };
@@ -361,7 +358,7 @@ function PowerUp(initOptions) {
           if (this.seedAngle >= 360) {
             this.seedAngle = 0;
           }
-          var sinVal = sin(this.seedAngle);
+          const sinVal = sin(this.seedAngle);
           this.size = player.size * 3 + sinVal;
           this.colorObjs[this.type].setAlpha(100 * sinVal + 155);
         }
@@ -385,7 +382,7 @@ function PowerUp(initOptions) {
           if (this.seedAngle >= 360) {
             this.seedAngle = 0;
           }
-          var sinVal = sin(this.seedAngle);
+          const sinVal = sin(this.seedAngle);
           this.size = player.size * 3 + sinVal;
           if (this.stepsUntilActive <= 0) {
             this.isActive = true;
@@ -405,7 +402,7 @@ function PowerUp(initOptions) {
           if (this.seedAngle >= 360) {
             this.seedAngle = 0;
           }
-          var sinVal = sin(this.seedAngle);
+          const sinVal = sin(this.seedAngle);
           this.size = 3 * sinVal + player.size * 3;
           this.colorObjs[this.type].setAlpha(100 * sinVal + 155);
         }
@@ -486,15 +483,16 @@ function displayIntroScreen() {
     alpha: mainTitlePrefs.fadeInAlpha,
     tint: mouseIsPressed ? mainTitlePrefs.fadeInTint + game.mouseHoldTime : mainTitlePrefs.fadeInTint
   });
-  var filter = color(colors.darkGrey);
+  const filter = color(colors.darkGrey);
   filter.setAlpha(mainTitlePrefs.filter);
   fill(filter);
   rectMode(CORNER);
   rect(0, 0, width, height);
   if (random(-1, 1) > 0) {
-    for (var f = 0; f < mainTitlePrefs.fuzzDensity; f++) {
+    let circleLocation;
+    for (let f = 0; f < mainTitlePrefs.fuzzDensity; f++) {
       fill(fudge(colors.grey, 20));
-      var circleLocation = {
+      circleLocation = {
         x: random(0, width),
         y: random(0, height),
         size: fudge(100, 50)
@@ -513,9 +511,7 @@ function displayIntroScreen() {
   textFont('Courier New');
   textSize(mainTitlePrefs.fontSize);
   textStyle('bold');
-  var mainTitleX = width / 2;
-  var mainTitleY = height / 2 - 30;
-  text(mainTitle, mainTitleX, mainTitleY);
+  text(mainTitle, width / 2, height / 2 - 30);
   pop();
   fill(colors.grey);
   text('click anywhere to begin', width / 2, height / 2 + 30);
@@ -526,8 +522,8 @@ function collisionDetection(objA, objB = {
   y: mouseY,
   size: player.size
 }) {
-  var diffX = Math.abs(objB.x - objA.x);
-  var diffY = Math.abs(objB.y - objA.y);
+  const diffX = Math.abs(objB.x - objA.x);
+  const diffY = Math.abs(objB.y - objA.y);
   return Math.sqrt(diffX * diffX + diffY * diffY) < objA.size + objB.size;
 };
 
@@ -536,7 +532,7 @@ function incrementLevel() {
   const enemySpawnRate = (.8 + difficultyCurve / 10) * game.currentLevel;
   const numberOfEnemies = game.currentLevel < 4 ? game.currentLevel : Math.floor(enemySpawnRate);
 
-  for (var j = 0; j < numberOfEnemies; j++) {
+  for (let j = 0; j < numberOfEnemies; j++) {
     createEnemy();
   }
   if (!powerUp) {
@@ -557,15 +553,15 @@ function incrementLevel() {
 }
 
 function createEnemy() {
-  var initX = random(0, width);
-  var initY = random(0, height);
-  var initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
-  var initSpeed = 4 + random(0, game.currentLevel / initSize);
-  var shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2 / game.currentLevel);
+  const initX = random(0, width);
+  const initY = random(0, height);
+  const initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
+  const initSpeed = 4 + random(0, game.currentLevel / initSize);
+  const shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2 / game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
   // 20px is an arbitrary fudge factor based on my own reaction time
-  var isLikelyCollision = collisionDetection({
+  const isLikelyCollision = collisionDetection({
     x: initX,
     y: initY,
     size: initSize + 20
@@ -584,7 +580,7 @@ function killEnemy(enemy) {
 }
 
 function drawAllEnemies(options = {}) {
-  for (var i = 0; i < enemies.length; i++) {
+  for (let i = 0; i < enemies.length; i++) {
     if (options.fadeIn) {
       enemies[i].drawSelfTranslucent();
     } else {
@@ -604,12 +600,7 @@ function drawHeader() {
 }
 
 function drawPlayer() {
-  lfoSeed += 1;
-  if (lfoSeed >= 360) {
-    lfoSeed = 0;
-  }
-  var lfoVal = sin(lfoSeed);
-  var isPlayerOnScreen = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
+  const isPlayerOnScreen = mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height;
   if (player.isVisible && isPlayerOnScreen) {
     fill(colors.grey);
     circle(mouseX, mouseY, player.size);
