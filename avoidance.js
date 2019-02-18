@@ -202,10 +202,6 @@ function Enemy(initOptions) {
   this.size = initSize;
   this.shrinkRate = shrinkRate;
   this.echoAngle = 0;
-  this.naturalMotion = {
-    thrustAngle: 0,
-    pitchAngle: 0
-  };
 
   this.update = function() {
     if (this.isCollisionWithMouse()) {
@@ -224,31 +220,16 @@ function Enemy(initOptions) {
       const yDiff = Math.abs(mouseY - this.y);
       const motionXIncrement = this.speed > xDiff ? xDiff : this.speed;
       const motionYIncrement = this.speed > yDiff ? yDiff : this.speed;
-      // fudging of motion for a more natural look
-      let thrustVariance;
-      let pitchVariance
-      if (millis() % 20) {
-        this.naturalMotion.thrustAngle += .1;
-        thrustVariance = cos(this.naturalMotion.thrustAngle);
-        pitchVariance = 0;
-      } else if (millis() % 10) {
-        this.naturalMotion.pitchAngle += map(this.size, 0, this.initSize, 1, 15);
-        pitchVariance = sin(this.naturalMotion.pitchAngle);
-        thrustVariance = 0;
-      } else {
-        thrustVariance = 0;
-        pitchVariance = 0;
-      }
       // motor away
       if (mouseX > this.x) {
-        this.x += motionXIncrement + thrustVariance + pitchVariance;
+        this.x += motionXIncrement;
       } else {
-        this.x -= motionXIncrement - thrustVariance - pitchVariance;
+        this.x -= motionXIncrement;
       }
       if (mouseY > this.y) {
-        this.y += motionYIncrement + thrustVariance + pitchVariance;
+        this.y += motionYIncrement;
       } else {
-        this.y -= motionYIncrement - thrustVariance - pitchVariance;
+        this.y -= motionYIncrement;
       }
       // cubic-bezier shrinkage
       if (this.size > 0) {
