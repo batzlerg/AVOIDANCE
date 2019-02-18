@@ -556,7 +556,7 @@ function createEnemy() {
   const initX = random(0, width);
   const initY = random(0, height);
   const initSize = random(fudge(50, game.currentLevel), fudge(80, game.currentLevel));
-  const initSpeed = 4 + random(0, game.currentLevel / initSize);
+  const initSpeed = 5 + random(0, game.currentLevel / initSize) + difficultyCurve;
   const shrinkRate = random(-map(difficultyCurve, 0, 1, 1, 0), .2 / game.currentLevel);
 
   // init position can't be toooo close to the player...that's just evil.
